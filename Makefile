@@ -6,7 +6,7 @@ SDL_LIBS   := $(shell pkg-config --libs sdl2 2>/dev/null || echo -lSDL2)
 
 all: beesim
 
-beesim: src/main.c src/sim.c src/sim.h
+beesim: src/start.c src/sim.c src/app.c src/sim.h
 	$(CC) $(CFLAGS) $(SDL_CFLAGS) -o $@ $(filter %.c,$^) $(SDL_LIBS) $(LDLIBS)
 
 run: beesim
