@@ -1,5 +1,3 @@
-#include <math.h>
-
 #include "sim.h"
 
 #define BEE_COUNT 120
@@ -23,7 +21,6 @@
 #define RESOURCE_START_COUNT 2
 #define RESOURCE_MIN_HIVE_DIST 200.0f
 #define DT (1.0f / 60.0f)
-#define PI_F 3.14159265358979f
 #define BIG_DIST 1.0e30f
 
 #define COLOR_BG ((int)0xFF121218u)
@@ -43,7 +40,7 @@ typedef struct {
 } Belief;
 
 typedef struct {
-    float x, y, heading;
+    float x, y, hx, hy;
     Belief belief[GOAL_COUNT];
     int carrying, scout;
 } Bee;
@@ -74,11 +71,24 @@ static float dist2(float ax, float ay, float bx, float by) {
     return dx * dx + dy * dy;
 }
 
-static float angle_diff(float target, float cur) {
-    float d = target - cur;
-    while (d > PI_F) d -= 2.0f * PI_F;
-    while (d < -PI_F) d += 2.0f * PI_F;
-    return d;
+static float absf(float v) { return v < 0.0f ? -v : v; }
+
+static float sqrtf_(float v) {
+    if (v <= 0.0f) return 0.0f;
+    union { float f; unsigned u; } guess = {v};
+    guess.u = (guess.u >> 1) + 0x1FC00000u;
+    float r = guess.f;
+    for (int i = 0; i < 3; ++i) r = 0.5f * (r + v / r);
+    return r;
+}
+
+static void rotate(Bee *b, float a) {
+    float a2 = a * a;
+    float c = 1.0f - a2 / 2.0f + a2 * a2 / 24.0f, s = a * (1.0f - a2 / 6.0f);
+    float hx = c * b->hx - s * b->hy, hy = s * b->hx + c * b->hy;
+    float k = (3.0f - (hx * hx + hy * hy)) / 2.0f;
+    b->hx = hx * k;
+    b->hy = hy * k;
 }
 
 static int goal_of(const Bee *b) { return b->carrying ? GOAL_HIVE : GOAL_RESOURCE; }
@@ -86,12 +96,12 @@ static int goal_of(const Bee *b) { return b->carrying ? GOAL_HIVE : GOAL_RESOURC
 static void belief_clear(Belief *bl) { *bl = (Belief){0.0f, 0.0f, BIG_DIST, 0.0f, 0, 0}; }
 
 static float estimate(const Bee *b, const Belief *bl) {
-    return sqrtf(dist2(b->x, b->y, bl->x, bl->y)) + bl->rest;
+    return sqrtf_(dist2(b->x, b->y, bl->x, bl->y)) + bl->rest;
 }
 
 static float resource_radius(const Resource *r) {
     float f = (float)r->hp / (float)RESOURCE_HP;
-    return RESOURCE_RADIUS_MIN + (RESOURCE_RADIUS_MAX - RESOURCE_RADIUS_MIN) * sqrtf(f < 0.0f ? 0.0f : f);
+    return RESOURCE_RADIUS_MIN + (RESOURCE_RADIUS_MAX - RESOURCE_RADIUS_MIN) * sqrtf_(f < 0.0f ? 0.0f : f);
 }
 
 static int nearest_resource(const World *w, float x, float y, float reach) {
@@ -100,7 +110,7 @@ static int nearest_resource(const World *w, float x, float y, float reach) {
     for (int i = 0; i < MAX_RESOURCES; ++i) {
         const Resource *r = &w->resources[i];
         if (!r->alive) continue;
-        float d = sqrtf(dist2(x, y, r->x, r->y)) - resource_radius(r);
+        float d = sqrtf_(dist2(x, y, r->x, r->y)) - resource_radius(r);
         if (d < best) {
             best = d;
             bi = i;
@@ -126,10 +136,11 @@ static void resource_spawn(World *w) {
 static void init(World *w) {
     for (int i = 0; i < BEE_COUNT; ++i) {
         Bee *b = &w->bees[i];
-        float a = rnd(0.0f, 2.0f * PI_F), r = rnd(0.0f, HIVE_SIZE);
-        b->x = HIVE_X + cosf(a) * r;
-        b->y = HIVE_Y + sinf(a) * r;
-        b->heading = rnd(0.0f, 2.0f * PI_F);
+        b->x = HIVE_X + rnd(-HIVE_SIZE, HIVE_SIZE);
+        b->y = HIVE_Y + rnd(-HIVE_SIZE, HIVE_SIZE);
+        float hx = rnd(-1.0f, 1.0f), hy = rnd(-1.0f, 1.0f), len = sqrtf_(hx * hx + hy * hy) + 1.0e-6f;
+        b->hx = hx / len;
+        b->hy = hy / len;
         b->scout = i % SCOUT_EVERY == 0;
         belief_clear(&b->belief[GOAL_RESOURCE]);
         belief_clear(&b->belief[GOAL_HIVE]);
@@ -179,7 +190,7 @@ static void hear(World *w) {
                 if (bl->valid && sh->age > bl->age) continue;
                 float d2 = dist2(b->x, b->y, sh->x, sh->y);
                 if (d2 > HEAR_RADIUS * HEAR_RADIUS) continue;
-                float cand = sh->dist + sqrtf(d2);
+                float cand = sh->dist + sqrtf_(d2);
                 if (cand <= own + 1.0e-3f) {
                     own = cand;
                     best = sh;
@@ -192,33 +203,40 @@ static void hear(World *w) {
 
 static void move(World *w) {
     const float max_turn = BEE_TURN_RATE * DT;
-    const float wander = sqrtf(3.0f * (BEE_SPEED / WANDER_PERSISTENCE) * DT);
+    const float wander = sqrtf_(3.0f * (BEE_SPEED / WANDER_PERSISTENCE) * DT);
 
     for (int i = 0; i < BEE_COUNT; ++i) {
         Bee *b = &w->bees[i];
         const Belief *goal = b->scout ? 0 : &b->belief[goal_of(b)];
 
         if (goal && goal->valid) {
-            float turn = angle_diff(atan2f(goal->y - b->y, goal->x - b->x), b->heading);
-            if (turn > max_turn) turn = max_turn;
-            if (turn < -max_turn) turn = -max_turn;
-            b->heading += turn;
+            float dx = goal->x - b->x, dy = goal->y - b->y, len = sqrtf_(dx * dx + dy * dy);
+            if (len > 0.0f) {
+                dx /= len;
+                dy /= len;
+                if (b->hx * dx + b->hy * dy >= 1.0f - max_turn * max_turn / 2.0f) {
+                    b->hx = dx;
+                    b->hy = dy;
+                } else {
+                    rotate(b, b->hx * dy - b->hy * dx >= 0.0f ? max_turn : -max_turn);
+                }
+            }
         } else {
-            b->heading += rnd(-wander, wander);
+            rotate(b, rnd(-wander, wander));
         }
 
-        b->x += cosf(b->heading) * BEE_SPEED * DT;
-        b->y += sinf(b->heading) * BEE_SPEED * DT;
+        b->x += b->hx * BEE_SPEED * DT;
+        b->y += b->hy * BEE_SPEED * DT;
 
-        if (b->x < 1.0f) { b->x = 1.0f; b->heading = PI_F - b->heading; }
-        if (b->x > SIM_X_SIZE - 2.0f) { b->x = SIM_X_SIZE - 2.0f; b->heading = PI_F - b->heading; }
-        if (b->y < 1.0f) { b->y = 1.0f; b->heading = -b->heading; }
-        if (b->y > SIM_Y_SIZE - 2.0f) { b->y = SIM_Y_SIZE - 2.0f; b->heading = -b->heading; }
+        if (b->x < 1.0f) { b->x = 1.0f; b->hx = -b->hx; }
+        if (b->x > SIM_X_SIZE - 2.0f) { b->x = SIM_X_SIZE - 2.0f; b->hx = -b->hx; }
+        if (b->y < 1.0f) { b->y = 1.0f; b->hy = -b->hy; }
+        if (b->y > SIM_Y_SIZE - 2.0f) { b->y = SIM_Y_SIZE - 2.0f; b->hy = -b->hy; }
 
         if (b->scout) continue;
 
         if (b->carrying) {
-            if (fabsf(b->x - HIVE_X) <= HIVE_SIZE / 2 && fabsf(b->y - HIVE_Y) <= HIVE_SIZE / 2) b->carrying = 0;
+            if (absf(b->x - HIVE_X) <= HIVE_SIZE / 2 && absf(b->y - HIVE_Y) <= HIVE_SIZE / 2) b->carrying = 0;
         } else {
             int ri = nearest_resource(w, b->x, b->y, PICKUP_RADIUS);
             if (ri >= 0) {
@@ -260,7 +278,8 @@ static void disc(float cx, float cy, float radius, int color) {
 }
 
 static void line(float x0, float y0, float x1, float y1, int color) {
-    int n = (int)fmaxf(fabsf(x1 - x0), fabsf(y1 - y0));
+    float dx = absf(x1 - x0), dy = absf(y1 - y0);
+    int n = (int)(dx > dy ? dx : dy);
     for (int i = 0; i <= n; ++i) {
         float t = n ? (float)i / (float)n : 0.0f;
         put((int)(x0 + (x1 - x0) * t), (int)(y0 + (y1 - y0) * t), color);
