@@ -1,6 +1,5 @@
 #include <SDL2/SDL.h>
 #include <assert.h>
-#include <stdlib.h>
 #include <time.h>
 
 #include "sim.h"
@@ -19,79 +18,77 @@ struct Sim {
     int quit;
 };
 
-static void lock(Sim *s) {
+static struct Sim sim;
+
+static void lock(void) {
     void *pixels;
-    SDL_LockTexture(s->texture, NULL, &pixels, &s->pitch);
-    s->pixels = pixels;
+    SDL_LockTexture(sim.texture, NULL, &pixels, &sim.pitch);
+    sim.pixels = pixels;
 }
 
-static void poll(Sim *s) {
+static void poll(void) {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
-        if (e.type == SDL_QUIT) s->quit = 1;
-        if (e.type == SDL_MOUSEBUTTONDOWN) s->clicks++;
+        if (e.type == SDL_QUIT) sim.quit = 1;
+        if (e.type == SDL_MOUSEBUTTONDOWN) sim.clicks++;
     }
 }
 
-Sim *simInit(void) {
-    Sim *s = calloc(1, sizeof(*s));
-    if (!s || SDL_Init(SDL_INIT_VIDEO) != 0) {
-        free(s);
-        return NULL;
+int simInit(void) {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) return 0;
+    SDL_CreateWindowAndRenderer(SIM_X_SIZE, SIM_Y_SIZE, 0, &sim.window, &sim.renderer);
+    if (sim.renderer)
+        sim.texture = SDL_CreateTexture(sim.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
+                                        SIM_X_SIZE, SIM_Y_SIZE);
+    if (!sim.texture) {
+        simExit();
+        return 0;
     }
-    SDL_CreateWindowAndRenderer(SIM_X_SIZE, SIM_Y_SIZE, 0, &s->window, &s->renderer);
-    if (s->renderer)
-        s->texture = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING,
-                                       SIM_X_SIZE, SIM_Y_SIZE);
-    if (!s->texture) {
-        simExit(s);
-        return NULL;
-    }
-    SDL_SetWindowTitle(s->window, "beesim");
-    s->rng = (unsigned)time(NULL) | 1u;
-    s->last_flush = SDL_GetTicks();
-    lock(s);
-    return s;
+    SDL_SetWindowTitle(sim.window, "beesim");
+    sim.rng = (unsigned)time(NULL) | 1u;
+    sim.last_flush = SDL_GetTicks();
+    lock();
+    return 1;
 }
 
-void simExit(Sim *s) {
-    if (s->texture) SDL_DestroyTexture(s->texture);
-    if (s->renderer) SDL_DestroyRenderer(s->renderer);
-    if (s->window) SDL_DestroyWindow(s->window);
+void simExit(void) {
+    if (sim.texture) SDL_DestroyTexture(sim.texture);
+    if (sim.renderer) SDL_DestroyRenderer(sim.renderer);
+    if (sim.window) SDL_DestroyWindow(sim.window);
     SDL_Quit();
-    free(s);
+    sim = (struct Sim){0};
 }
 
-int simFlush(Sim *s) {
-    SDL_UnlockTexture(s->texture);
-    SDL_RenderCopy(s->renderer, s->texture, NULL, NULL);
-    SDL_RenderPresent(s->renderer);
-    Uint32 elapsed = SDL_GetTicks() - s->last_flush;
+int simFlush(void) {
+    SDL_UnlockTexture(sim.texture);
+    SDL_RenderCopy(sim.renderer, sim.texture, NULL, NULL);
+    SDL_RenderPresent(sim.renderer);
+    Uint32 elapsed = SDL_GetTicks() - sim.last_flush;
     if (elapsed < FRAME_MS) SDL_Delay(FRAME_MS - elapsed);
-    s->last_flush = SDL_GetTicks();
-    lock(s);
-    poll(s);
-    return !s->quit;
+    sim.last_flush = SDL_GetTicks();
+    lock();
+    poll();
+    return !sim.quit;
 }
 
-void simPutPixel(Sim *s, int x, int y, int argb) {
+void simPutPixel(int x, int y, int argb) {
     assert(0 <= x && x < SIM_X_SIZE && "Out of range");
     assert(0 <= y && y < SIM_Y_SIZE && "Out of range");
-    s->pixels[y * (s->pitch / 4) + x] = (Uint32)argb;
+    sim.pixels[y * (sim.pitch / 4) + x] = (Uint32)argb;
 }
 
-int simRand(Sim *s) {
-    unsigned x = s->rng;
+int simRand(void) {
+    unsigned x = sim.rng;
     x ^= x << 13;
     x ^= x >> 17;
     x ^= x << 5;
-    s->rng = x;
+    sim.rng = x;
     return (int)(x >> 1);
 }
 
-int simClicks(Sim *s) {
-    poll(s);
-    int n = s->clicks;
-    s->clicks = 0;
+int simClicks(void) {
+    poll();
+    int n = sim.clicks;
+    sim.clicks = 0;
     return n;
 }

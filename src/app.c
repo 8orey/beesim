@@ -65,8 +65,8 @@ typedef struct {
     float spawn_timer;
 } World;
 
-static float rnd(Sim *sim, float lo, float hi) {
-    return lo + (hi - lo) * (float)(simRand(sim) & 0xFFFF) / 65536.0f;
+static float rnd(float lo, float hi) {
+    return lo + (hi - lo) * (float)(simRand() & 0xFFFF) / 65536.0f;
 }
 
 static float dist2(float ax, float ay, float bx, float by) {
@@ -109,12 +109,12 @@ static int nearest_resource(const World *w, float x, float y, float reach) {
     return bi;
 }
 
-static void resource_spawn(World *w, Sim *sim) {
+static void resource_spawn(World *w) {
     for (int i = 0; i < MAX_RESOURCES; ++i) {
         if (w->resources[i].alive) continue;
         for (int tries = 0; tries < 16; ++tries) {
-            float x = rnd(sim, RESOURCE_RADIUS_MAX, SIM_X_SIZE - RESOURCE_RADIUS_MAX);
-            float y = rnd(sim, RESOURCE_RADIUS_MAX, SIM_Y_SIZE - RESOURCE_RADIUS_MAX);
+            float x = rnd(RESOURCE_RADIUS_MAX, SIM_X_SIZE - RESOURCE_RADIUS_MAX);
+            float y = rnd(RESOURCE_RADIUS_MAX, SIM_Y_SIZE - RESOURCE_RADIUS_MAX);
             if (dist2(x, y, HIVE_X, HIVE_Y) < RESOURCE_MIN_HIVE_DIST * RESOURCE_MIN_HIVE_DIST) continue;
             w->resources[i] = (Resource){x, y, RESOURCE_HP, 1};
             return;
@@ -123,18 +123,18 @@ static void resource_spawn(World *w, Sim *sim) {
     }
 }
 
-static void init(World *w, Sim *sim) {
+static void init(World *w) {
     for (int i = 0; i < BEE_COUNT; ++i) {
         Bee *b = &w->bees[i];
-        float a = rnd(sim, 0.0f, 2.0f * PI_F), r = rnd(sim, 0.0f, HIVE_SIZE);
+        float a = rnd(0.0f, 2.0f * PI_F), r = rnd(0.0f, HIVE_SIZE);
         b->x = HIVE_X + cosf(a) * r;
         b->y = HIVE_Y + sinf(a) * r;
-        b->heading = rnd(sim, 0.0f, 2.0f * PI_F);
+        b->heading = rnd(0.0f, 2.0f * PI_F);
         b->scout = i % SCOUT_EVERY == 0;
         belief_clear(&b->belief[GOAL_RESOURCE]);
         belief_clear(&b->belief[GOAL_HIVE]);
     }
-    for (int i = 0; i < RESOURCE_START_COUNT; ++i) resource_spawn(w, sim);
+    for (int i = 0; i < RESOURCE_START_COUNT; ++i) resource_spawn(w);
 }
 
 static void see(World *w) {
@@ -190,7 +190,7 @@ static void hear(World *w) {
     }
 }
 
-static void move(World *w, Sim *sim) {
+static void move(World *w) {
     const float max_turn = BEE_TURN_RATE * DT;
     const float wander = sqrtf(3.0f * (BEE_SPEED / WANDER_PERSISTENCE) * DT);
 
@@ -204,7 +204,7 @@ static void move(World *w, Sim *sim) {
             if (turn < -max_turn) turn = -max_turn;
             b->heading += turn;
         } else {
-            b->heading += rnd(sim, -wander, wander);
+            b->heading += rnd(-wander, wander);
         }
 
         b->x += cosf(b->heading) * BEE_SPEED * DT;
@@ -232,68 +232,68 @@ static void move(World *w, Sim *sim) {
     }
 }
 
-static void step(World *w, Sim *sim) {
+static void step(World *w) {
     w->spawn_timer += DT;
     if (w->spawn_timer >= RESOURCE_SPAWN_PERIOD) {
         w->spawn_timer -= RESOURCE_SPAWN_PERIOD;
-        resource_spawn(w, sim);
+        resource_spawn(w);
     }
     see(w);
     hear(w);
-    move(w, sim);
+    move(w);
 }
 
-static void put(Sim *sim, int x, int y, int color) {
-    if (x >= 0 && y >= 0 && x < SIM_X_SIZE && y < SIM_Y_SIZE) simPutPixel(sim, x, y, color);
+static void put(int x, int y, int color) {
+    if (x >= 0 && y >= 0 && x < SIM_X_SIZE && y < SIM_Y_SIZE) simPutPixel(x, y, color);
 }
 
-static void fill_rect(Sim *sim, int x0, int y0, int w, int h, int color) {
+static void fill_rect(int x0, int y0, int w, int h, int color) {
     for (int y = y0; y < y0 + h; ++y)
-        for (int x = x0; x < x0 + w; ++x) put(sim, x, y, color);
+        for (int x = x0; x < x0 + w; ++x) put(x, y, color);
 }
 
-static void disc(Sim *sim, float cx, float cy, float radius, int color) {
+static void disc(float cx, float cy, float radius, int color) {
     int r = (int)radius;
     for (int y = -r; y <= r; ++y)
         for (int x = -r; x <= r; ++x)
-            if (x * x + y * y <= r * r) put(sim, (int)cx + x, (int)cy + y, color);
+            if (x * x + y * y <= r * r) put((int)cx + x, (int)cy + y, color);
 }
 
-static void line(Sim *sim, float x0, float y0, float x1, float y1, int color) {
+static void line(float x0, float y0, float x1, float y1, int color) {
     int n = (int)fmaxf(fabsf(x1 - x0), fabsf(y1 - y0));
     for (int i = 0; i <= n; ++i) {
         float t = n ? (float)i / (float)n : 0.0f;
-        put(sim, (int)(x0 + (x1 - x0) * t), (int)(y0 + (y1 - y0) * t), color);
+        put((int)(x0 + (x1 - x0) * t), (int)(y0 + (y1 - y0) * t), color);
     }
 }
 
-static void draw(const World *w, Sim *sim, int show_beliefs) {
-    fill_rect(sim, 0, 0, SIM_X_SIZE, SIM_Y_SIZE, COLOR_BG);
-    fill_rect(sim, (int)(HIVE_X - HIVE_SIZE / 2), (int)(HIVE_Y - HIVE_SIZE / 2), (int)HIVE_SIZE, (int)HIVE_SIZE,
+static void draw(const World *w, int show_beliefs) {
+    fill_rect(0, 0, SIM_X_SIZE, SIM_Y_SIZE, COLOR_BG);
+    fill_rect((int)(HIVE_X - HIVE_SIZE / 2), (int)(HIVE_Y - HIVE_SIZE / 2), (int)HIVE_SIZE, (int)HIVE_SIZE,
               COLOR_HIVE);
     for (int i = 0; i < MAX_RESOURCES; ++i) {
         const Resource *r = &w->resources[i];
-        if (r->alive) disc(sim, r->x, r->y, resource_radius(r), COLOR_PATCH);
+        if (r->alive) disc(r->x, r->y, resource_radius(r), COLOR_PATCH);
     }
     for (int i = 0; i < BEE_COUNT && show_beliefs; ++i) {
         const Bee *b = &w->bees[i];
         const Belief *bl = &b->belief[goal_of(b)];
-        if (!b->scout && bl->valid) line(sim, b->x, b->y, bl->x, bl->y, bl->direct ? COLOR_SEEN : COLOR_RUMOUR);
+        if (!b->scout && bl->valid) line(b->x, b->y, bl->x, bl->y, bl->direct ? COLOR_SEEN : COLOR_RUMOUR);
     }
     for (int i = 0; i < BEE_COUNT; ++i) {
         const Bee *b = &w->bees[i];
-        fill_rect(sim, (int)b->x - 1, (int)b->y - 1, 3, 3,
+        fill_rect((int)b->x - 1, (int)b->y - 1, 3, 3,
                   b->scout ? COLOR_SCOUT : b->carrying ? COLOR_CARRY : COLOR_SEARCH);
     }
 }
 
-void app(Sim *sim) {
+void app(void) {
     World world = {0};
     int show_beliefs = 0;
-    init(&world, sim);
+    init(&world);
     do {
-        if (simClicks(sim) % 2) show_beliefs = !show_beliefs;
-        step(&world, sim);
-        draw(&world, sim, show_beliefs);
-    } while (simFlush(sim));
+        if (simClicks() % 2) show_beliefs = !show_beliefs;
+        step(&world);
+        draw(&world, show_beliefs);
+    } while (simFlush());
 }

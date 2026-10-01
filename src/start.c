@@ -1,9 +1,8 @@
 #include "sim.h"
 
 int main(void) {
-    Sim *sim = simInit();
-    if (!sim) return 1;
-    app(sim);
-    simExit(sim);
+    if (!simInit()) return 1;
+    app();
+    simExit();
     return 0;
 }
