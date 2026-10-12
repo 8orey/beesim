@@ -1,0 +1,88 @@
+Trace: stats/trace.txt
+Uses: 20000000, distinct 'User <- Operand' pairs: 128
+
+== Window 1: 128 distinct patterns, top 15 cover 95.07% ==
+   6819241  34.10%  call <- phi
+   3735902  18.68%  br <- icmp
+   3532549  17.66%  add <- phi
+   3527911  17.64%  icmp <- add
+    264526   1.32%  getelementptr <- getelementptr
+    249477   1.25%  load <- getelementptr
+    191595   0.96%  icmp <- phi
+    174795   0.87%  getelementptr <- phi
+     94903   0.47%  icmp <- load
+     88028   0.44%  fsub <- load
+     76774   0.38%  fmul <- fadd
+     74124   0.37%  fadd <- fdiv
+     68010   0.34%  fdiv <- call
+     65722   0.33%  br <- fcmp
+     50066   0.25%  fadd <- fmul
+
+== Window 2: 329 distinct patterns, top 15 cover 91.33% ==
+   3498013  17.49%  add <- phi | icmp <- add
+   3498013  17.49%  icmp <- add | br <- icmp
+   3410061  17.05%  call <- phi | call <- phi
+   3406821  17.03%  call <- phi | add <- phi
+   3403582  17.02%  br <- icmp | call <- phi
+    191340   0.96%  br <- icmp | getelementptr <- getelementptr
+    160198   0.80%  getelementptr <- getelementptr | load <- getelementptr
+     94903   0.47%  load <- getelementptr | icmp <- load
+     94105   0.47%  icmp <- load | br <- icmp
+     90672   0.45%  getelementptr <- getelementptr | getelementptr <- phi
+     88363   0.44%  br <- icmp | add <- phi
+     83700   0.42%  icmp <- phi | br <- icmp
+     82080   0.41%  getelementptr <- phi | getelementptr <- phi
+     82080   0.41%  getelementptr <- phi | icmp <- phi
+     82080   0.41%  icmp <- phi | icmp <- phi
+
+== Window 3: 476 distinct patterns, top 15 cover 89.96% ==
+   3498013  17.49%  add <- phi | icmp <- add | br <- icmp
+   3406821  17.03%  call <- phi | call <- phi | add <- phi
+   3403582  17.02%  icmp <- add | br <- icmp | call <- phi
+   3403581  17.02%  br <- icmp | call <- phi | call <- phi
+   3403581  17.02%  call <- phi | add <- phi | icmp <- add
+    101901   0.51%  br <- icmp | getelementptr <- getelementptr | load <- getelementptr
+     94105   0.47%  load <- getelementptr | icmp <- load | br <- icmp
+     93966   0.47%  getelementptr <- getelementptr | load <- getelementptr | icmp <- load
+     88428   0.44%  br <- icmp | getelementptr <- getelementptr | getelementptr <- phi
+     87972   0.44%  icmp <- add | br <- icmp | getelementptr <- getelementptr
+     82080   0.41%  getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi
+     82080   0.41%  getelementptr <- phi | getelementptr <- phi | icmp <- phi
+     82080   0.41%  getelementptr <- phi | icmp <- phi | icmp <- phi
+     82080   0.41%  icmp <- phi | icmp <- phi | br <- icmp
+     81396   0.41%  icmp <- phi | br <- icmp | getelementptr <- getelementptr
+
+== Window 4: 590 distinct patterns, top 15 cover 89.30% ==
+   3403582  17.02%  add <- phi | icmp <- add | br <- icmp | call <- phi
+   3403581  17.02%  icmp <- add | br <- icmp | call <- phi | call <- phi
+   3403581  17.02%  br <- icmp | call <- phi | call <- phi | add <- phi
+   3403581  17.02%  call <- phi | call <- phi | add <- phi | icmp <- add
+   3403581  17.02%  call <- phi | add <- phi | icmp <- add | br <- icmp
+     93168   0.47%  getelementptr <- getelementptr | load <- getelementptr | icmp <- load | br <- icmp
+     87972   0.44%  add <- phi | icmp <- add | br <- icmp | getelementptr <- getelementptr
+     87972   0.44%  icmp <- add | br <- icmp | getelementptr <- getelementptr | getelementptr <- phi
+     83334   0.42%  br <- icmp | getelementptr <- getelementptr | load <- getelementptr | icmp <- load
+     82080   0.41%  getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi | icmp <- phi
+     82080   0.41%  getelementptr <- phi | getelementptr <- phi | icmp <- phi | icmp <- phi
+     82080   0.41%  getelementptr <- phi | icmp <- phi | icmp <- phi | br <- icmp
+     81396   0.41%  br <- icmp | getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi
+     81396   0.41%  icmp <- phi | icmp <- phi | br <- icmp | getelementptr <- getelementptr
+     81396   0.41%  icmp <- phi | br <- icmp | getelementptr <- getelementptr | load <- getelementptr
+
+== Window 5: 695 distinct patterns, top 15 cover 89.11% ==
+   3403581  17.02%  add <- phi | icmp <- add | br <- icmp | call <- phi | call <- phi
+   3403581  17.02%  icmp <- add | br <- icmp | call <- phi | call <- phi | add <- phi
+   3403581  17.02%  br <- icmp | call <- phi | call <- phi | add <- phi | icmp <- add
+   3403581  17.02%  call <- phi | call <- phi | add <- phi | icmp <- add | br <- icmp
+   3400784  17.00%  call <- phi | add <- phi | icmp <- add | br <- icmp | call <- phi
+     87972   0.44%  add <- phi | icmp <- add | br <- icmp | getelementptr <- getelementptr | getelementptr <- phi
+     82536   0.41%  br <- icmp | getelementptr <- getelementptr | load <- getelementptr | icmp <- load | br <- icmp
+     82080   0.41%  getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi | icmp <- phi | icmp <- phi
+     82080   0.41%  getelementptr <- phi | getelementptr <- phi | icmp <- phi | icmp <- phi | br <- icmp
+     81396   0.41%  icmp <- add | br <- icmp | getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi
+     81396   0.41%  br <- icmp | getelementptr <- getelementptr | getelementptr <- phi | getelementptr <- phi | icmp <- phi
+     81396   0.41%  getelementptr <- phi | icmp <- phi | icmp <- phi | br <- icmp | getelementptr <- getelementptr
+     81396   0.41%  icmp <- phi | icmp <- phi | br <- icmp | getelementptr <- getelementptr | load <- getelementptr
+     81396   0.41%  icmp <- phi | br <- icmp | getelementptr <- getelementptr | load <- getelementptr | icmp <- load
+     65328   0.33%  load <- getelementptr | icmp <- load | br <- icmp | add <- phi | icmp <- add
+

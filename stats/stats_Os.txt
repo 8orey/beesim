@@ -1,0 +1,88 @@
+Trace: stats/trace.txt
+Uses: 20000000, distinct 'User <- Operand' pairs: 116
+
+== Window 1: 116 distinct patterns, top 15 cover 97.06% ==
+   3697560  18.49%  and <- icmp
+   2556980  12.78%  icmp <- add
+   2458069  12.29%  call <- phi
+   2456556  12.28%  or <- phi
+   1432700   7.16%  br <- icmp
+   1327445   6.64%  add <- phi
+   1322369   6.61%  icmp <- phi
+   1232520   6.16%  icmp <- or
+   1232520   6.16%  and <- and
+   1232520   6.16%  br <- and
+    134519   0.67%  getelementptr <- getelementptr
+    124144   0.62%  load <- getelementptr
+     93995   0.47%  getelementptr <- phi
+     61239   0.31%  fadd <- phi
+     49553   0.25%  icmp <- load
+
+== Window 2: 294 distinct patterns, top 15 cover 93.59% ==
+   2465040  12.33%  and <- icmp | and <- icmp
+   1317373   6.59%  add <- phi | icmp <- add
+   1317373   6.59%  icmp <- add | br <- icmp
+   1232520   6.16%  and <- icmp | and <- and
+   1232520   6.16%  and <- and | br <- and
+   1229641   6.15%  icmp <- add | icmp <- add
+   1228505   6.14%  call <- phi | call <- phi
+   1228278   6.14%  or <- phi | or <- phi
+   1228278   6.14%  or <- phi | icmp <- or
+   1228278   6.14%  icmp <- or | icmp <- phi
+   1228278   6.14%  icmp <- phi | and <- icmp
+   1228278   6.14%  br <- and | call <- phi
+   1228277   6.14%  call <- phi | add <- phi
+   1226913   6.13%  br <- icmp | or <- phi
+     98281   0.49%  br <- icmp | getelementptr <- getelementptr
+
+== Window 3: 416 distinct patterns, top 15 cover 92.18% ==
+   1232520   6.16%  and <- icmp | and <- icmp | and <- icmp
+   1232520   6.16%  and <- icmp | and <- icmp | and <- and
+   1232520   6.16%  and <- icmp | and <- and | br <- and
+   1229641   6.15%  add <- phi | icmp <- add | icmp <- add
+   1229641   6.15%  icmp <- add | icmp <- add | br <- icmp
+   1228278   6.14%  or <- phi | or <- phi | icmp <- or
+   1228278   6.14%  or <- phi | icmp <- or | icmp <- phi
+   1228278   6.14%  icmp <- or | icmp <- phi | and <- icmp
+   1228278   6.14%  icmp <- phi | and <- icmp | and <- icmp
+   1228278   6.14%  and <- and | br <- and | call <- phi
+   1228277   6.14%  br <- and | call <- phi | call <- phi
+   1228277   6.14%  call <- phi | call <- phi | add <- phi
+   1228277   6.14%  call <- phi | add <- phi | icmp <- add
+   1226913   6.13%  icmp <- add | br <- icmp | or <- phi
+   1226913   6.13%  br <- icmp | or <- phi | or <- phi
+
+== Window 4: 505 distinct patterns, top 15 cover 92.15% ==
+   1232520   6.16%  and <- icmp | and <- icmp | and <- icmp | and <- and
+   1232520   6.16%  and <- icmp | and <- icmp | and <- and | br <- and
+   1229641   6.15%  add <- phi | icmp <- add | icmp <- add | br <- icmp
+   1228278   6.14%  or <- phi | or <- phi | icmp <- or | icmp <- phi
+   1228278   6.14%  or <- phi | icmp <- or | icmp <- phi | and <- icmp
+   1228278   6.14%  icmp <- or | icmp <- phi | and <- icmp | and <- icmp
+   1228278   6.14%  icmp <- phi | and <- icmp | and <- icmp | and <- icmp
+   1228278   6.14%  and <- icmp | and <- and | br <- and | call <- phi
+   1228277   6.14%  and <- and | br <- and | call <- phi | call <- phi
+   1228277   6.14%  br <- and | call <- phi | call <- phi | add <- phi
+   1228277   6.14%  call <- phi | call <- phi | add <- phi | icmp <- add
+   1228277   6.14%  call <- phi | add <- phi | icmp <- add | icmp <- add
+   1226913   6.13%  icmp <- add | icmp <- add | br <- icmp | or <- phi
+   1226913   6.13%  icmp <- add | br <- icmp | or <- phi | or <- phi
+   1226913   6.13%  br <- icmp | or <- phi | or <- phi | icmp <- or
+
+== Window 5: 581 distinct patterns, top 15 cover 92.11% ==
+   1232520   6.16%  and <- icmp | and <- icmp | and <- icmp | and <- and | br <- and
+   1228278   6.14%  or <- phi | or <- phi | icmp <- or | icmp <- phi | and <- icmp
+   1228278   6.14%  or <- phi | icmp <- or | icmp <- phi | and <- icmp | and <- icmp
+   1228278   6.14%  icmp <- or | icmp <- phi | and <- icmp | and <- icmp | and <- icmp
+   1228278   6.14%  icmp <- phi | and <- icmp | and <- icmp | and <- icmp | and <- and
+   1228278   6.14%  and <- icmp | and <- icmp | and <- and | br <- and | call <- phi
+   1228277   6.14%  and <- icmp | and <- and | br <- and | call <- phi | call <- phi
+   1228277   6.14%  and <- and | br <- and | call <- phi | call <- phi | add <- phi
+   1228277   6.14%  br <- and | call <- phi | call <- phi | add <- phi | icmp <- add
+   1228277   6.14%  call <- phi | call <- phi | add <- phi | icmp <- add | icmp <- add
+   1228277   6.14%  call <- phi | add <- phi | icmp <- add | icmp <- add | br <- icmp
+   1226913   6.13%  add <- phi | icmp <- add | icmp <- add | br <- icmp | or <- phi
+   1226913   6.13%  icmp <- add | icmp <- add | br <- icmp | or <- phi | or <- phi
+   1226913   6.13%  icmp <- add | br <- icmp | or <- phi | or <- phi | icmp <- or
+   1226913   6.13%  br <- icmp | or <- phi | or <- phi | icmp <- or | icmp <- phi
+

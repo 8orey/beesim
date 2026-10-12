@@ -1,0 +1,16 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default",
+      "generator": "Ninja",
+      "binaryDir": "build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "/usr/lib/llvm-21/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/lib/llvm-21/bin/clang++",
+        "LLVM_DIR": "/usr/lib/llvm-21/lib/cmake/llvm"
+      }
+    }
+  ]
+}
